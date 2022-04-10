@@ -7,7 +7,7 @@ from gamestate import GameState
 from card import Card
 
 class Game(object):
-    def __init__(self, player1, player2, player3, player4, gamestate=None):
+    def __init__(self, player1, player2, player3, player4, gamestate=None, passDirection = 'Hold'):
         if gamestate == None:
             shuffledDeck = Deck().shuffleMe()
             self._players = [player1.recieveHand(shuffledDeck[0:13]), player2.recieveHand(shuffledDeck[13:26]), player3.recieveHand(shuffledDeck[26:39]), player4.recieveHand(shuffledDeck[39:52])] # array of players
@@ -17,10 +17,13 @@ class Game(object):
             for i in range (0,4):
                 self._players.append(gamestate.getPlayer(i))
             self._gamestate = gamestate
+        self._passDirection = passDirection
 
     def playGame(self):
+        self.passCards(self._passDirection)
+        self._players = list(map(Player.organizeCards, self._players))
+        
         while self._gamestate._movesLeft >= 0:
-            print (self._gamestate._movesLeft)
             # check if we need to clear the trick
             if self._gamestate._currentTrick[3] is not None: 
                 winningPlayer = self.findWinner(self._gamestate._currentTrick, self._gamestate._order) #winningPlayer = Player object
@@ -52,30 +55,22 @@ class Game(object):
             ## UPDATE GAMESTATE
             self._gamestate = GameState(self._players, self._gamestate._points, self._gamestate._cardsPlayed, self._gamestate._movesLeft - 1, self._gamestate, self._gamestate._order, self._gamestate._currentTrick, self._gamestate._currentPlayerTurn + 1)
                 
-    
-        print (self._gamestate._points)
-        print (self._gamestate._movesLeft)
-        print (self._gamestate._lastState._points)
-        print (len(self._gamestate._cardsPlayed))
-        print (self._gamestate._cardsPlayed)
-
-        for i in range(len(self._gamestate._cardsPlayed)):
-            if self._gamestate._cardsPlayed[i] == Card(2, 'Clubs'):
-                print ('dub')
-        for i in range(4):
-            print (self._players[i]._name, self._players[i]._currPts)
         for i in range(4):
             if self._players[i]._currPts == 26:
                 for h in range(4):
                     self._players[h]._currPts = 26
                 self._players[i]._currPts = 0
                 break
+        
+        print ('Final Scores:')
 
+        for player in self._players:
+            print (f'{player._name}: {player._currPts}')
+        
+        return self._players
         
     def findWinner(self, finishedTrick, playerOrder):
         ledSuit = finishedTrick[0].suit()
-        print(finishedTrick)
-        print (playerOrder)
         helperList = [[finishedTrick[i], playerOrder[i]] for i in range(4)]
         currentWinner = playerOrder[0]
         currentMax = 0
@@ -91,3 +86,22 @@ class Game(object):
         print ('Player scores: ')
         for player in self._gamestate._players:
             print (str(player) + ": " + str(player._currPts) + " ")
+
+
+    def passCards(self, direction):
+        receiversOfCards = []
+        match direction:
+            case 'Left':
+                dir = -1
+            case 'Right':
+                dir = 1
+            case 'Across':
+                dir = 2
+        if direction == 'Hold':
+            return
+        for i in range(4):
+            print (f'{self._players[i]}, please pass 3 cards {direction} to {self._players[(i+dir)%4]}')
+            print (self._players[i]._hand)
+            receiversOfCards += [((i+dir)%4, self._players[i].pass3())]
+        for i in range(4):
+            self._players[receiversOfCards[i][0]]._hand += receiversOfCards[i][1]

@@ -9,12 +9,6 @@ class Player(object):
         self._name = name  
         self._hand = []
         self._lifetimePts = pts
-        for suit in ['Clubs', 'Diamonds', 'Hearts', 'Spades']:
-            suits = [card for card in hand if card.suit() == suit]
-            if suits != []:
-                print (suits[0].value())
-                suits.sort(key = lambda card: card.value())
-                self._hand += suits
 
         #self._wonLastTrick = wonLastTrick
 
@@ -62,9 +56,37 @@ class Player(object):
         for suit in ['Clubs', 'Diamonds', 'Hearts', 'Spades']:
             suits = [card for card in hand if card.suit() == suit]
             if suits != []:
-                print (suits[0].value())
                 suits.sort(key = lambda card: card.value())
                 self._hand += suits
         return self
 
     
+    def pass3(self):
+        cards = []
+        cardsIndexSelected = []
+        count = 1
+        while len(cards) != 3:
+            try:
+                cardChoice = int (input(f'Card {count}:'))
+                if cardChoice not in cardsIndexSelected and not (cardChoice >= len(self._hand) or cardChoice < 0):
+                    cards += [self._hand[cardChoice]]
+                    cardsIndexSelected +=[cardChoice]
+                    count += 1
+                else:
+                    print('You must select a NUMBER in range as listed above that has not been selected')
+            except:
+                print('You must select a NUMBER in range as listed above')
+        
+        for card in cards:
+            self._hand.remove(card)
+        return cards
+
+    def organizeCards(self):
+        newHand = []
+        for suit in ['Clubs', 'Diamonds', 'Hearts', 'Spades']:
+            suits = [card for card in self._hand if card.suit() == suit]
+            if suits != []:
+                suits.sort(key = lambda card: card.value())
+                newHand += suits
+        self._hand = newHand
+        return self
